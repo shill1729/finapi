@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finapi"
+version = "0.1.0"
+description = "Wrappers for Alpha Vantage, Finnhub, and Robinhood Crypto APIs"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.28",
+    "pandas>=2.0",
+    "PyNaCl>=1.5",
+    "finnhub-python>=2.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["finapi*"]

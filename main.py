@@ -1,5 +1,5 @@
 """
-Quick smoke test for Alpha Vantage and Finnhub wrappers.
+Quick test for Alpha Vantage and Finnhub wrappers.
 Run from the repo root with the venv active:
     python main.py
 """
