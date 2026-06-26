@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Alpha Vantage API response keys that signal a rate-limit or info message
 # rather than actual data.
-_AV_SOFT_ERROR_KEYS = {"Information", "Note"}
+_AV_SOFT_ERROR_KEYS = {"Information", "Note", "Error Message"}
 
 
 class AlphaVantageAPI:
