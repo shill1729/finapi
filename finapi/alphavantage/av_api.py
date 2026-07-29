@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import List, Optional, Union
 
 import pandas as pd
@@ -111,6 +112,7 @@ class AlphaVantageAPI:
         period: Period = Period.DAILY,
         interval: Optional[Interval] = None,
         adjusted: bool = True,
+        month: Optional[str] = None,
     ) -> pd.Series:
         """
         Retrieve closing prices for a single symbol.
@@ -120,11 +122,22 @@ class AlphaVantageAPI:
             period: Data granularity.
             interval: Required when period is INTRADAY.
             adjusted: Use adjusted close for equities. Ignored for crypto.
+            month: Specific historical month to query (YYYY-MM), e.g. '2009-01'.
+                Only valid for Period.INTRADAY equity requests; any month since
+                2000-01 is supported. Implies outputsize=full for that month.
 
         Returns:
             pd.Series of float closing prices, indexed by date (ascending).
         """
         is_crypto = symbol in self.COIN_NAMES
+        if month is not None:
+            if period != Period.INTRADAY:
+                raise ValueError("month is only valid when period is Period.INTRADAY")
+            if is_crypto:
+                raise ValueError("month is not supported for crypto intraday data")
+            if not re.fullmatch(r"\d{4}-\d{2}", month):
+                raise ValueError(f"month must be in YYYY-MM format, got {month!r}")
+
         params: dict = {
             "function": self._get_function_name(is_crypto, period, adjusted),
             "symbol": symbol,
@@ -136,6 +149,7 @@ class AlphaVantageAPI:
             if not interval:
                 raise ValueError("interval must be specified for Period.INTRADAY")
             params["interval"] = interval.value
+            params["month"] = month
 
         if not is_crypto and period != Period.INTRADAY:
             params["adjusted"] = "true" if adjusted else "false"
@@ -148,6 +162,7 @@ class AlphaVantageAPI:
         period: Period = Period.DAILY,
         interval: Optional[Interval] = None,
         adjusted: bool = True,
+        month: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Retrieve closing prices for one or more symbols as a DataFrame.
@@ -161,6 +176,8 @@ class AlphaVantageAPI:
             period: Data granularity.
             interval: Required when period is INTRADAY.
             adjusted: Use adjusted close for equities.
+            month: Specific historical month to query (YYYY-MM). Only valid
+                for Period.INTRADAY equity requests.
 
         Returns:
             pd.DataFrame — columns are symbols, index is date. Rows with any
@@ -174,7 +191,7 @@ class AlphaVantageAPI:
         series_list = []
         for i, symbol in enumerate(symbols, 1):
             logger.info("Fetching %s (%d/%d)", symbol, i, len(symbols))
-            series_list.append(self.get_historical_data(symbol, period, interval, adjusted))
+            series_list.append(self.get_historical_data(symbol, period, interval, adjusted, month))
 
         result = pd.concat(series_list, axis=1)
         result.columns = symbols
